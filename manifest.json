@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "OpenRouter AI Chat Extension",
+  "version": "1.0",
+  "description": "OpenRouter AI Chat Extension with secure content scripting and storage",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "https://api.openrouter.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "css": ["styles.css"]
+  }],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "openrouter-icon.jpeg"
+  },
+  "icons": {
+    "128": "openrouter-icon.jpeg"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "drag_and_drop": true,
+  "storage": {
+    "persistent": true
+  }
+}

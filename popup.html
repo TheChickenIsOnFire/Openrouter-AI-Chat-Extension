@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter Extension</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+            --light-text: #212529;
+            --dark-text: #dee2e6;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-width: 300px;
+            max-width: 500px;
+            background-color: var(--light-bg);
+            color: var(--light-text);
+        }
+
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .popup-container {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        #model-list {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .model-item {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .model-item:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+
+        #message-history {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .message {
+            margin: 0.5rem 0;
+        }
+
+        .user-message {
+            color: var(--primary-color);
+        }
+
+        .assistant-message {
+            color: var(--secondary-color);
+        }
+
+        #chat-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            padding: 0.5rem;
+        }
+
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 0;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+        }
+
+        details {
+            margin: 0.5rem 0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--dark-bg);
+                color: var(--dark-text);
+            }
+        }
+    </style>
+</head>
+<body>
+    <main role="main" class="popup-container">
+        <!-- Responsive Container -->
+        <section id="expanded-panel" class="responsive-container" role="region" aria-labelledby="expanded-heading">
+            <h2 id="expanded-heading">OpenRouter Panel</h2>
+            <p>Expanded functionality container for the extension</p>
+        </section>
+
+        <!-- Searchable Model Directory -->
+        <section id="model-directory" role="region" aria-labelledby="model-dir-heading">
+            <h2 id="model-dir-heading">Model Directory</h2>
+            <div class="search-container">
+                <input type="search" id="model-search" aria-label="Search available models" placeholder="Search models...">
+            </div>
+            <ul role="listbox" id="model-list" tabindex="0" aria-label="Available models">
+                <li class="model-item" role="option" tabindex="-1">Model 1</li>
+                <li class="model-item" role="option" tabindex="-1">Model 2</li>
+                <li class="model-item" role="option" tabindex="-1">Model 3</li>
+            </ul>
+        </section>
+
+        <!-- Chat Interface -->
+        <section id="chat-interface" role="region" aria-labelledby="chat-heading">
+            <h2 id="chat-heading">Chat Interface</h2>
+            <div id="message-history" role="log" aria-live="polite">
+                <div class="message assistant-message" role="article">Welcome to OpenRouter!</div>
+            </div>
+            <form id="chat-form" role="form" aria-label="Chat input form">
+                <textarea id="chat-input" aria-label="Enter your message" rows="3" placeholder="Type your message..."></textarea>
+                <button type="submit" aria-label="Send message">Send</button>
+            </form>
+        </section>
+
+        <!-- Settings Panel -->
+        <section id="settings-panel" role="region" aria-labelledby="settings-heading">
+            <h2 id="settings-heading">Settings</h2>
+            <div class="toggle-container">
+                <label for="theme-toggle">Dark Mode</label>
+                <input type="checkbox" id="theme-toggle" aria-label="Toggle dark mode">
+            </div>
+            
+            <!-- API Key Management -->
+            <div id="api-key-section" role="region" aria-labelledby="api-key-heading">
+                <h3 id="api-key-heading">API Key Management</h3>
+                <input type="password" id="api-key-input" aria-label="Enter your API key" placeholder="Enter API key">
+                <button id="save-api-key" aria-label="Save API key">Save Key</button>
+            </div>
+        </section>
+
+        <!-- Help Documentation -->
+        <section id="help-section" role="region" aria-labelledby="help-heading">
+            <h2 id="help-heading">Help Documentation</h2>
+            <details>
+                <summary>Getting Started</summary>
+                <p>Enter your API key and select a model to start chatting.</p>
+            </details>
+            <details>
+                <summary>Keyboard Shortcuts</summary>
+                <ul>
+                    <li>Tab: Navigate between controls</li>
+                    <li>Enter: Submit chat message</li>
+                    <li>Esc: Clear chat input</li>
+                </ul>
+            </details>
+        </section>
+
+        <!-- Performance Metrics -->
+        <section id="performance-metrics" role="region" aria-labelledby="metrics-heading">
+            <h2 id="metrics-heading">Performance Metrics</h2>
+            <div class="metric" aria-live="polite">
+                <span>Response Time:</span> <span id="response-time">0ms</span>
+            </div>
+            <div class="metric" aria-live="polite">
+                <span>Tokens/Second:</span> <span id="tokens-per-second">0</span>
+            </div>
+        </section>
+    </main>
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // Model search
+        const modelSearch = document.getElementById('model-search');
+        const modelList = document.getElementById('model-list');
+        modelSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const items = modelList.querySelectorAll('.model-item');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(term) ? 'block' : 'none';
+            });
+        });
+
+        // Chat form submission
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const messageHistory = document.getElementById('message-history');
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (text) {
+                const message = document.createElement('div');
+                message.className = 'message user-message';
+                message.textContent = text;
+                messageHistory.appendChild(message);
+                chatInput.value = '';
+                // Simulate assistant response
+                setTimeout(() => {
+                    const response = document.createElement('div');
+                    response.className = 'message assistant-message';
+                    response.textContent = 'Thinking...';
+                    messageHistory.appendChild(response);
+                    messageHistory.scrollTop = messageHistory.scrollHeight;
+                }, 500);
+                messageHistory.scrollTop = messageHistory.scrollHeight;
+            }
+        });
+
+        // API key save
+        const saveApiKey = document.getElementById('save-api-key');
+        saveApiKey.addEventListener('click', () => {
+            const apiKey = document.getElementById('api-key-input').value;
+            if (apiKey) {
+                // In a real extension, you would use chrome.storage
+                alert('API key saved (simulated)');
+            }
+        });
+    </script>
+</body>
+</html>
