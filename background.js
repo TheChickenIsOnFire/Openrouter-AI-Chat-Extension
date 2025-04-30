@@ -31,7 +31,7 @@ async function getEncryptionKey() {
   if (storedKey[CRYPTO_KEY_NAME]) {
     return crypto.subtle.importKey(
       'jwk',
-      storedKey[Crypto_KEY_NAME],
+      storedKey[CRYPTO_KEY_NAME],
       { name: 'AES-GCM' },
       false,
       ['encrypt', 'decrypt']
@@ -46,7 +46,7 @@ async function getEncryptionKey() {
   );
   
   const exportedKey = await crypto.subtle.exportKey('jwk', key);
-  await chrome.storage.local.set({ [Crypto_KEY_NAME]: exportedKey });
+  await chrome.storage.local.set({ [CRYPTO_KEY_NAME]: exportedKey });
   return key;
 }
 
@@ -84,6 +84,11 @@ async function decryptApiKey(encryptedData) {
 
 // Message Passing
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (!message || !message.type) {
+    sendResponse({ success: false, error: 'Invalid message format' });
+    return;
+  }
+  
   try {
     switch (message.type) {
       case 'STORE_API_KEY':
@@ -138,14 +143,22 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
 // Cross-Origin Request Handling
 chrome.webRequest.onBeforeSendHeaders.addListener(
-  (details, callback) => {
-    chrome.storage.local.get('openrouter_api_key', async (data) => {
-      if (data.openrouter_api_key) {
+  async (details) => {
+    try {
+      if (!details || !details.requestHeaders) {
+        return { cancel: true };
+      }
+      
+      const data = await chrome.storage.local.get('openrouter_api_key');
+      
+      if (data?.openrouter_api_key) {
         const apiKey = await decryptApiKey(data.openrouter_api_key);
-        details.requestHeaders.push({
-          name: 'Authorization',
-          value: `Bearer ${apiKey}`
-        });
+        if (apiKey) {
+          details.requestHeaders.push({
+            name: 'Authorization',
+            value: `Bearer ${apiKey}`
+          });
+        }
       }
       
       details.requestHeaders.push({
@@ -153,10 +166,13 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         value: 'nosniff'
       });
       
-      callback({ requestHeaders: details.requestHeaders });
-    });
+      return { requestHeaders: details.requestHeaders };
+    } catch (error) {
+      console.error('Request header modification failed:', error);
+      return { cancel: true };
+    }
   },
-  { urls: ['https://openrouter.ai/api/*', 'https://api.openrouter.ai/*'] },
+  { urls: ['https://openrouter.ai/api/*'] },
   ['blocking', 'requestHeaders', 'extraHeaders']
 );
 
