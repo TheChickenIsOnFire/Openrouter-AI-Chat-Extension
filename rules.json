@@ -3,7 +3,7 @@
     "id": 1,
     "priority": 1,
     "action": {
-      "type": "modify_headers",
+      "type": "modifyHeaders",
       "request_headers": [
         {
           "header": "Authorization",
