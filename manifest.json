@@ -7,8 +7,8 @@
     "activeTab",
     "scripting",
     "storage",
-    "webRequest",
-    "webRequestBlocking"
+    "declarativeNetRequest",
+    "https://openrouter.ai/api/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -26,9 +26,32 @@
     "128": "openrouter-icon.jpeg"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://openrouter.ai/api/*"
   },
   "storage": {
     "persistent": true
+  },
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "header_rules",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  },
+  "commands": {
+    "toggle-extension": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+O",
+        "mac": "Command+Shift+O"
+      },
+      "description": "Toggle extension overlay"
+    },
+    "clear-cache": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+C",
+        "mac": "Command+Shift+C"
+      },
+      "description": "Clear local storage cache"
+    }
   }
 }

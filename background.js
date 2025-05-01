@@ -141,40 +141,68 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   return true; // Keep message channel open for async responses
 });
 
-// Cross-Origin Request Handling
-chrome.webRequest.onBeforeSendHeaders.addListener(
-  async (details) => {
-    try {
-      if (!details || !details.requestHeaders) {
-        return { cancel: true };
-      }
-      
-      const data = await chrome.storage.local.get('openrouter_api_key');
-      
-      if (data?.openrouter_api_key) {
-        const apiKey = await decryptApiKey(data.openrouter_api_key);
-        if (apiKey) {
-          details.requestHeaders.push({
-            name: 'Authorization',
-            value: `Bearer ${apiKey}`
-          });
-        }
-      }
-      
-      details.requestHeaders.push({
-        name: 'X-Content-Type-Options',
-        value: 'nosniff'
+// Declarative Rule Management
+async function initializeHeaderRules() {
+  try {
+    const apiKey = await getStoredApiKey();
+    if (apiKey) {
+      await chrome.declarativeNetRequest.updateDynamicRules({
+        addRules: [{
+          id: 1,
+          priority: 1,
+          action: {
+            type: "modify_headers",
+            requestHeaders: [
+              { header: "Authorization", operation: "set", value: `Bearer ${apiKey}` },
+              { header: "X-Content-Type-Options", operation: "set", value: "nosniff" }
+            ]
+          },
+          condition: {
+            urlFilter: "https://openrouter.ai/api/*",
+            resourceTypes: ["xmlhttprequest"]
+          }
+        }]
       });
-      
-      return { requestHeaders: details.requestHeaders };
-    } catch (error) {
-      console.error('Request header modification failed:', error);
-      return { cancel: true };
     }
-  },
-  { urls: ['https://openrouter.ai/api/*'] },
-  ['blocking', 'requestHeaders', 'extraHeaders']
-);
+  } catch (error) {
+    console.error('Rule initialization failed:', error);
+  }
+}
+
+async function refreshApiHeaderRule() {
+  const apiKey = await getStoredApiKey();
+  if (apiKey) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      updateRules: [{
+        id: 1,
+        action: {
+          type: "modify_headers",
+          requestHeaders: [
+            { header: "Authorization", operation: "set", value: `Bearer ${apiKey}` }
+          ]
+        }
+      }]
+    });
+  }
+}
+
+async function getStoredApiKey() {
+  const stored = await chrome.storage.local.get('openrouter_api_key');
+  if (stored.openrouter_api_key) {
+    return decryptApiKey(stored.openrouter_api_key);
+  }
+  return null;
+}
+
+// Initialize rules on service worker start
+initializeHeaderRules();
+
+// Update rules when API key changes
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.openrouter_api_key) {
+    refreshApiHeaderRule();
+  }
+});
 
 // Keyboard Shortcut Listeners
 chrome.commands.onCommand.addListener((command) => {
@@ -187,6 +215,8 @@ chrome.commands.onCommand.addListener((command) => {
   if (command === 'clear-cache') {
     chrome.storage.local.clear(() => {
       console.log('Cache cleared');
+      // Reinitialize rules after cache clear
+      initializeHeaderRules();
     });
   }
 });

@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modify_headers",
+      "request_headers": [
+        {
+          "header": "Authorization",
+          "operation": "set",
+          "value": "Bearer <API_KEY>"
+        },
+        {
+          "header": "X-Content-Type-Options",
+          "operation": "set",
+          "value": "nosniff"
+        }
+      ]
+    },
+    "condition": {
+      "url_filter": "https://openrouter.ai/api/*",
+      "resource_types": ["xmlhttprequest"]
+    }
+  }
+]
